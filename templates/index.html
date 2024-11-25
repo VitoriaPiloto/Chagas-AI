@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico de Doença de Chagas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.min.css">
+    <script src="/static/uteis.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Carregar Arquivo para Diagnóstico</h1>
+        <form onsubmit="uploadFile(event)" enctype="multipart/form-data">
+            <input type="file" id="fileInput" accept="image/*,.pdf" required>
+            <button type="submit">Enviar</button>
+        </form>
+        <div id="result"></div>
+    </div>
+</body>
+</html>
