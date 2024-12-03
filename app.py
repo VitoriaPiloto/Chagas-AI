@@ -5,6 +5,7 @@ import PyPDF2  # Biblioteca para ler PDFs
 import pytesseract  # Biblioteca para OCR
 from PIL import Image  # Biblioteca para manipulação de imagens
 import re
+import pickle
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -25,7 +26,7 @@ def extrair_texto_pdf(arquivo):
     with open(arquivo, 'rb') as pdf_file:
         pdf_reader = PyPDF2.PdfReader(pdf_file)
         for pagina in pdf_reader.pages:
-            texto += pagina.extract_text() or ""  # Adiciona texto da página se não for None
+            texto += pagina.extract_text() or ""
     return texto
 
 # Função para extrair texto de uma imagem
@@ -38,14 +39,44 @@ def extrair_texto_imagem(arquivo):
         print(f"Erro ao ler a imagem: {e}")
     return texto
 
-# Função para processar sintomas e gerar diagnóstico simulado
 def processar_sintomas(texto_extraido):
-    sintomas = re.findall(r'\bfebre\b|\binchaço\b|\bdor\b|\bmal-estar\b', texto_extraido, re.IGNORECASE)
-    if sintomas:
-        probabilidade = 0.9 if len(sintomas) > 1 else 0.6
+    # Convertendo o texto extraído para minúsculas e removendo caracteres estranhos
+    texto_extraido = texto_extraido.lower().strip()
+    
+    # Sintomas para Chagas
+    sintomas_chagas = re.findall(r'\bfebre\b|\btaquicardia\b|\bicterícia\b|\bmanchas vermelhas na pele\b|\bedema de face\b|\bedema de membros\b|\binchaço\b|\bdor no corpo\b|\bdor de cabeça\b|\bvomitos\b|\bdiarreia\b|\bnausea\b|\bmal-estar\b|\bfraqueza\b|\bcrescimento do baço\b|\bcrescimento do fígado\b', texto_extraido, re.IGNORECASE)
+    
+    # Sintomas para outras doenças
+    sintomas_gripe = re.findall(r'\btosse\b|\bcalafrios\b|\bdor de garganta\b|\bnariz entupido\b', texto_extraido, re.IGNORECASE)
+    sintomas_resfriado = re.findall(r'\btosse\b|\bnariz entupido\b|\bespirros\b|\bdor de cabeça\b', texto_extraido, re.IGNORECASE)
+    sintomas_covid = re.findall(r'\btosse\b|\bfalta de ar\b|\bfebre\b|\bdor muscular\b', texto_extraido, re.IGNORECASE)
+    sintomas_pneumonia = re.findall(r'\bfalta de ar\b|\bcalafrios\b|\bcansaço\b|\bdor no peito\b', texto_extraido, re.IGNORECASE)
+
+    # Inicializando probabilidade
+    probabilidade = 0.2
+    diagnostico = "negativo"
+
+    # Se sintomas de Chagas forem encontrados, aumentar a probabilidade
+    if len(sintomas_chagas) > 1:
+        probabilidade += 0.3
+
+    # Ajustando a probabilidade com base nos sintomas de outras doenças
+    if sintomas_gripe or sintomas_resfriado or sintomas_covid or sintomas_pneumonia:
+        probabilidade -= 0.2  # Diminui um pouco a probabilidade caso haja sintomas de outras doenças
+
+    # Garantindo que a probabilidade não ultrapasse 1 (100%)
+    probabilidade = min(probabilidade, 1.0)
+
+    # Diagnóstico final com base na probabilidade ajustada
+    if probabilidade >= 0.7:
+        diagnostico = "Existe muita chance de conter a doença de chagas! Procure um médico!"
+    elif probabilidade >= 0.3:
+        diagnostico = "Exista a possibilidade de conter a doença"
     else:
-        probabilidade = 0.2
-    diagnostico = "positivo" if probabilidade > 0.7 else "pode ter" if probabilidade > 0.4 else "negativo"
+        diagnostico = "Não possui a doença"
+
+    # Corrigindo para não gerar valores inesperados
+
     return {"diagnostico": diagnostico, "probabilidade": probabilidade}
 
 # Rota principal
@@ -62,21 +93,17 @@ def upload_file():
     if file.filename == '':
         return redirect(request.url)
 
-    # Verifica se o arquivo é um PDF ou imagem
     if file and (file.filename.endswith('.pdf') or file.filename.lower().endswith(('.png', '.jpg', '.jpeg'))):
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
         file.save(filepath)
 
-        # Extração do texto via PDF ou imagem
         if file.filename.endswith('.pdf'):
             texto_extraido = extrair_texto_pdf(filepath)
         else:
             texto_extraido = extrair_texto_imagem(filepath)
 
-        # Analisar sintomas e calcular diagnóstico
         resultado = processar_sintomas(texto_extraido)
 
-        # Salvar arquivo e resultado no banco
         conexao = conectar_banco()
         cursor = conexao.cursor()
         query = "INSERT INTO diagnosticos (arquivo_nome, texto_extraido, diagnostico, probabilidade) VALUES (%s, %s, %s, %s)"
@@ -85,10 +112,60 @@ def upload_file():
         cursor.close()
         conexao.close()
 
-        return f"Diagnóstico: {resultado['diagnostico']}, Probabilidade: {resultado['probabilidade']:.2f}"
+        return jsonify({"diagnostico": resultado['diagnostico'], "probabilidade": resultado['probabilidade']})
     else:
         return "Por favor, envie apenas arquivos PDF ou imagens (PNG, JPG).", 400
 
+# Rota para receber feedback
+@app.route('/feedback', methods=['POST'])
+def receber_feedback():
+    data = request.get_json()
+    if not data or 'arquivo_nome' not in data or 'diagnostico_real' not in data:
+        return jsonify({"message": "Dados inválidos"}), 400
+
+    conexao = conectar_banco()
+    cursor = conexao.cursor()
+    query = "INSERT INTO feedback (arquivo_nome, diagnostico_real, processado) VALUES (%s, %s, FALSE)"
+    cursor.execute(query, (data['arquivo_nome'], data['diagnostico_real']))
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+    return jsonify({"message": "Feedback recebido com sucesso!"}), 200
+
+# Rota para re-treinar o modelo
+@app.route('/retrain', methods=['POST'])
+def retrain_model():
+    conexao = conectar_banco()
+    cursor = conexao.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM feedback WHERE processado = FALSE")
+    feedbacks = cursor.fetchall()
+
+    if not feedbacks:
+        return jsonify({"message": "Nenhum feedback disponível para treinamento"}), 200
+
+    texts = []
+    labels = []
+    for feedback in feedbacks:
+        texts.append(feedback['arquivo_nome'])  # Ajuste conforme necessário
+        labels.append(feedback['diagnostico_real'])
+
+    with open('modelo_chagas.pkl', 'rb') as f:
+        vectorizer, model = pickle.load(f)
+
+    X_feedback = vectorizer.transform(texts)
+    model.partial_fit(X_feedback, labels, classes=["positivo", "negativo", "indeterminado"])
+
+    with open('modelo_chagas.pkl', 'wb') as f:
+        pickle.dump((vectorizer, model), f)
+
+    cursor.executemany("UPDATE feedback SET processado = TRUE WHERE id = %s", [(f['id'],) for f in feedbacks])
+    conexao.commit()
+    cursor.close()
+    conexao.close()
+
+    return jsonify({"message": "Modelo atualizado com sucesso!"}), 200
+
 # Iniciar o servidor
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)  # Executa o servidor no IP 0.0.0.0 e na porta 5000
+    app.run(debug=True, host='192.168.0.134', port=8080)

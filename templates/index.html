@@ -6,15 +6,34 @@
     <title>Diagnóstico de Doença de Chagas</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/milligram/1.3.0/milligram.min.css">
     <script src="/static/uteis.js"></script>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Carregar Arquivo para Diagnóstico</h1>
+        <h1>Diagnóstico de Doença de Chagas</h1>
+
+        <!-- Formulário de upload -->
         <form onsubmit="uploadFile(event)" enctype="multipart/form-data">
             <input type="file" id="fileInput" accept="image/*,.pdf" required>
             <button type="submit">Enviar</button>
         </form>
-        <div id="result"></div>
+
+        <!-- Resultado do diagnóstico -->
+        <div id="result" style="margin-top: 20px;"></div>
+
+        <!-- Formulário de feedback -->
+        <div id="feedback-form">
+            <h3>Dar Feedback</h3>
+            <p><strong>Arquivo:</strong> <span id="feedback-arquivo"></span></p>
+            <label for="diagnostico-real">Diagnóstico Correto:</label>
+            <select id="diagnostico-real" required>
+                <option value="">Selecione</option>
+                <option value="positivo">Positivo</option>
+                <option value="negativo">Negativo</option>
+                <option value="pode ter">Pode Ter</option>
+            </select>
+            <button type="button" onclick="enviarFeedback()">Enviar Feedback</button>
+        </div>
     </div>
 </body>
 </html>
