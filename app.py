@@ -43,8 +43,11 @@ def processar_sintomas(texto_extraido):
     # Convertendo o texto extraído para minúsculas e removendo caracteres estranhos
     texto_extraido = texto_extraido.lower().strip()
     
+    print(texto_extraido)
+    
     # Sintomas para Chagas
     sintomas_chagas = re.findall(r'\bfebre\b|\btaquicardia\b|\bicterícia\b|\bmanchas vermelhas na pele\b|\bedema de face\b|\bedema de membros\b|\binchaço\b|\bdor no corpo\b|\bdor de cabeça\b|\bvomitos\b|\bdiarreia\b|\bnausea\b|\bmal-estar\b|\bfraqueza\b|\bcrescimento do baço\b|\bcrescimento do fígado\b', texto_extraido, re.IGNORECASE)
+    resultado_exame = re.findall(r'\bnão reagente\b|\breagente\b', texto_extraido, re.IGNORECASE)
     
     # Sintomas para outras doenças
     sintomas_gripe = re.findall(r'\btosse\b|\bcalafrios\b|\bdor de garganta\b|\bnariz entupido\b', texto_extraido, re.IGNORECASE)
@@ -59,14 +62,23 @@ def processar_sintomas(texto_extraido):
     # Se sintomas de Chagas forem encontrados, aumentar a probabilidade
     if len(sintomas_chagas) > 1:
         probabilidade += 0.3
-
+        
+    for resultado in resultado_exame:
+        if (resultado == 'não reagente'):
+            probabilidade -= 0.2 
+        else:
+            probabilidade += 0.3
+        
     # Ajustando a probabilidade com base nos sintomas de outras doenças
     if sintomas_gripe or sintomas_resfriado or sintomas_covid or sintomas_pneumonia:
         probabilidade -= 0.2  # Diminui um pouco a probabilidade caso haja sintomas de outras doenças
 
-    # Garantindo que a probabilidade não ultrapasse 1 (100%)
+    # Garantindo que a probabilidade não ultrapasse 1 (100%) ou 0%
     probabilidade = min(probabilidade, 1.0)
 
+    if(probabilidade < 0):
+        probabilidade = max(probabilidade, 0)
+        
     # Diagnóstico final com base na probabilidade ajustada
     if probabilidade >= 0.7:
         diagnostico = "positivo"
@@ -74,7 +86,13 @@ def processar_sintomas(texto_extraido):
         diagnostico = "pode ter"
     else:
         diagnostico = "negativo"
-
+        
+    print(resultado_exame)
+        
+    # diagnostico = 'positivo' if 'reagente' in  resultado_exame  else 'negativo' 
+    
+    print(diagnostico)
+        
     # Corrigindo para não gerar valores inesperados
 
     return {"diagnostico": diagnostico, "probabilidade": probabilidade}
