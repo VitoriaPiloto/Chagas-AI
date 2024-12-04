@@ -4,29 +4,20 @@ Umma inteligência artificial gerada para conseguir ler resultado de exames de d
 
 ## Como rodar no seu computador
 
-1. Instale as dependências necessárias em requirements.txt
-2. Configure o banco de dados com o script abaixo
-3. Altere em app.py o host disponível para iniciar o servidor 
+1. Instalar as dependências necessárias
+```bash
+   pip install -r requirements.txt
+   ```
+2. Configure o [mySQL](https://dev.mysql.com/downloads/installer/) Server em sua máquina
+  
+
+4. Instalar o Tesseract 5.4.0
+5. Configure o banco de dados com o script abaixo
+6. Alterar o app.py os dados do banco de dados.
 
 ## Script para criação do banco
 
-CREATE TABLE Paciente 
-( 
- id INT PRIMARY KEY,  
- dataNascimento INT,  
- cpf INT,  
- endereco INT,  
- nome INT,  
-); 
-
-CREATE TABLE Medico 
-( 
- id INT PRIMARY KEY,  
- nome INT,  
- crm INT,  
- especialidade INT,  
-); 
-
+```bash
 CREATE TABLE diagnosticos (
     id INT AUTO_INCREMENT PRIMARY KEY,
     arquivo_nome VARCHAR(255) NOT NULL,
@@ -36,9 +27,13 @@ CREATE TABLE diagnosticos (
     data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE chagas_ai.feedback (
+CREATE TABLE feedback (
     id INT AUTO_INCREMENT PRIMARY KEY,
     arquivo_nome VARCHAR(255) NOT NULL,
     diagnostico_real VARCHAR(50) NOT NULL,
     processado BOOLEAN DEFAULT FALSE
 );
+```
+
+## [Link do vídeo da apresentação presencial](https://drive.google.com/file/d/1U4PGGvmRPnA_FfUobHDa8siF45kZByaY/view?usp=sharing)
+
