@@ -2,6 +2,12 @@
 
 Umma inteligência artificial gerada para conseguir ler resultado de exames de doença de chagas. 
 
+## Como rodar no seu computador
+
+1. Instale as dependências necessárias em requirements.txt
+2. Configure o banco de dados com o script abaixo
+3. Altere em app.py o host disponível para iniciar o servidor 
+
 ## Script para criação do banco
 
 CREATE TABLE Paciente 
