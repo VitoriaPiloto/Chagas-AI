@@ -15,7 +15,7 @@ function uploadFile(event) {
             var response = JSON.parse(xhr.responseText);
     
             document.getElementById("result").innerHTML = `
-                <p><strong>Diagnóstico:</strong> ${response.diagnostico}</p>
+                <p><strong>Diagnóstico:</strong> ${montarMensagem(response.diagnostico)}</p>
                 <p><strong>Probabilidade:</strong> ${(response.probabilidade * 100).toFixed(2)}%</p>
                 <button onclick="prepareFeedback('${fileInput.files[0].name}')">Dar Feedback</button>
             `;
@@ -26,6 +26,15 @@ function uploadFile(event) {
     
 
     xhr.send(formData);
+}
+
+function montarMensagem(diagnostico){
+    if (diagnostico == 'positivo')
+        return "Existe muita chance de conter a doença de chagas! Procure um médico!"
+    if (diagnostico == 'pode ter')
+        return "Existe a possibilidade de conter a doença"
+    if (diagnostico == 'negativo')
+        return "Não possui a doença"
 }
 
 function prepareFeedback(fileName) {

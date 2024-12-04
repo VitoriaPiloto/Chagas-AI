@@ -17,7 +17,7 @@ def conectar_banco():
         host="localhost",
         user="root",
         password="13579",
-        database="chagas_ai"
+        database="sys"
     )
 
 # Função para extrair texto de um arquivo PDF
@@ -69,11 +69,11 @@ def processar_sintomas(texto_extraido):
 
     # Diagnóstico final com base na probabilidade ajustada
     if probabilidade >= 0.7:
-        diagnostico = "Existe muita chance de conter a doença de chagas! Procure um médico!"
+        diagnostico = "positivo"
     elif probabilidade >= 0.3:
-        diagnostico = "Exista a possibilidade de conter a doença"
+        diagnostico = "pode ter"
     else:
-        diagnostico = "Não possui a doença"
+        diagnostico = "negativo"
 
     # Corrigindo para não gerar valores inesperados
 
@@ -166,6 +166,7 @@ def retrain_model():
 
     return jsonify({"message": "Modelo atualizado com sucesso!"}), 200
 
+
 # Iniciar o servidor
 if __name__ == '__main__':
-    app.run(debug=True, host='192.168.0.134', port=8080)
+    app.run(debug=True, host='0.0.0.0', port=8080)
