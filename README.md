@@ -1,6 +1,8 @@
 # Chagas AI 
 
-Umma inteligência artificial gerada para conseguir ler resultado de exames de doença de chagas. 
+Uma inteligência artificial gerada para conseguir ler resultado de exames de doença de chagas. 
+
+## [Link do vídeo da apresentação presencial](https://drive.google.com/file/d/1U4PGGvmRPnA_FfUobHDa8siF45kZByaY/view?usp=sharing)
 
 ## Como rodar no seu computador
 
@@ -35,5 +37,4 @@ CREATE TABLE feedback (
 );
 ```
 
-## [Link do vídeo da apresentação presencial](https://drive.google.com/file/d/1U4PGGvmRPnA_FfUobHDa8siF45kZByaY/view?usp=sharing)
 
